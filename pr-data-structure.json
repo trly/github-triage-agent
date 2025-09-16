@@ -1,0 +1,88 @@
+{
+  "repository": "trly/quad-ops",
+  "pullRequests": [
+    {
+      "id": 38,
+      "title": "build(deps): bump github.com/spf13/viper from 1.20.1 to 1.21.0",
+      "author": "dependabot[bot]",
+      "url": "https://github.com/trly/quad-ops/pull/38",
+      "type": "dependency-update",
+      "dependency": {
+        "name": "github.com/spf13/viper",
+        "fromVersion": "1.20.1",
+        "toVersion": "1.21.0",
+        "ecosystem": "go"
+      },
+      "category": "build",
+      "automatable": true
+    },
+    {
+      "id": 37,
+      "title": "build(deps): bump github.com/ulikunitz/xz from 0.5.12 to 0.5.14 in the go_modules group across 1 directory",
+      "author": "dependabot[bot]",
+      "url": "https://github.com/trly/quad-ops/pull/37",
+      "type": "dependency-update",
+      "dependency": {
+        "name": "github.com/ulikunitz/xz",
+        "fromVersion": "0.5.12",
+        "toVersion": "0.5.14",
+        "ecosystem": "go",
+        "group": "go_modules"
+      },
+      "category": "build",
+      "automatable": true
+    },
+    {
+      "id": 36,
+      "title": "build(deps): bump github.com/spf13/cobra from 1.9.1 to 1.10.1",
+      "author": "dependabot[bot]",
+      "url": "https://github.com/trly/quad-ops/pull/36",
+      "type": "dependency-update",
+      "dependency": {
+        "name": "github.com/spf13/cobra",
+        "fromVersion": "1.9.1",
+        "toVersion": "1.10.1",
+        "ecosystem": "go"
+      },
+      "category": "build",
+      "automatable": true
+    },
+    {
+      "id": 35,
+      "title": "build(deps): bump github.com/stretchr/testify from 1.10.0 to 1.11.1",
+      "author": "dependabot[bot]",
+      "url": "https://github.com/trly/quad-ops/pull/35",
+      "type": "dependency-update",
+      "dependency": {
+        "name": "github.com/stretchr/testify",
+        "fromVersion": "1.10.0",
+        "toVersion": "1.11.1",
+        "ecosystem": "go"
+      },
+      "category": "build",
+      "automatable": true
+    },
+    {
+      "id": 34,
+      "title": "build(deps): bump github.com/creativeprojects/go-selfupdate from 1.5.0 to 1.5.1",
+      "author": "dependabot[bot]",
+      "url": "https://github.com/trly/quad-ops/pull/34",
+      "type": "dependency-update",
+      "dependency": {
+        "name": "github.com/creativeprojects/go-selfupdate",
+        "fromVersion": "1.5.0",
+        "toVersion": "1.5.1",
+        "ecosystem": "go"
+      },
+      "category": "build",
+      "automatable": true
+    }
+  ],
+  "summary": {
+    "totalPRs": 5,
+    "ecosystem": "go",
+    "allDependabot": true,
+    "allAutomatable": true,
+    "riskLevel": "low"
+  }
+}
