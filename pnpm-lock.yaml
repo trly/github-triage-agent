@@ -11,9 +11,9 @@ importers:
       '@octokit/rest':
         specifier: ^20.1.2
         version: 20.1.2
-      '@sourcegraph/the-orb-is-awake':
-        specifier: ^0.1.0
-        version: 0.1.0
+      '@sourcegraph/amp-sdk':
+        specifier: 0.1.0-20251029183144-g02378e6
+        version: 0.1.0-20251029183144-g02378e6
       '@types/yargs':
         specifier: ^17.0.33
         version: 17.0.33
@@ -181,14 +181,14 @@ packages:
   '@octokit/types@13.10.0':
     resolution: {integrity: sha512-ifLaO34EbbPj0Xgro4G5lP5asESjwHracYJvVaPIyXMuiuXLlhic3S47cBdTb+jfODkTE5YtGCLt3Ay3+J97sA==}
 
-  '@sourcegraph/amp@0.0.1757596358-g533dbf':
-    resolution: {integrity: sha512-qs88l6OfD7ebF1KodKhpamlhEOB2uOVyaOx/zt2QlDd1niQsqzCjabfLBgaJIz6yvRaB5Vn1LxDMU8FJixLEvA==}
+  '@sourcegraph/amp-sdk@0.1.0-20251029183144-g02378e6':
+    resolution: {integrity: sha512-o3T40S07BWAS3/5P1exn/0emodQ4FvEmZeOOeOqwMmCsrFXYnJCVOXSS82c2okOEhliRLUsomMOxMLS0ILY1uQ==}
+    engines: {node: '>=18'}
+
+  '@sourcegraph/amp@0.0.1761923019-g9e7b76':
+    resolution: {integrity: sha512-GXpugYO0pxYh51uXPu1Yo6aXcCBpW5KMEkgPOgtSfI5JaByqT2zbAx06O73BRsOooEqe5SQobYvSTBbXT30LMQ==}
     engines: {node: '>=20'}
     hasBin: true
-
-  '@sourcegraph/the-orb-is-awake@0.1.0':
-    resolution: {integrity: sha512-gCjfJbIME1ZqinUBybMGuFSM3NV5IvyLRvPE1bh2+DLIYQe6/BE/AooooW+FV6BPP8/R9qBpSKCLX2GK4tWB5A==}
-    engines: {node: '>=18'}
 
   '@tsconfig/node10@1.0.11':
     resolution: {integrity: sha512-DcRjDCujK/kCk/cUe8Xz8ZSpm8mS3mNNpta+jGCA6USEDfktlNvm1+IuZ9eTcDbNk41BHwpHHeW+N1lKCz4zOw==}
@@ -332,6 +332,9 @@ packages:
     resolution: {integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==}
     engines: {node: '>=6'}
 
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
   zod@4.1.8:
     resolution: {integrity: sha512-5R1P+WwQqmmMIEACyzSvo4JXHY5WiAFHRMg+zBZKgKS+Q1viRa0C1hmUKtHltoIFKtIdki3pRxkmpP74jnNYHQ==}
 
@@ -464,13 +467,14 @@ snapshots:
     dependencies:
       '@octokit/openapi-types': 24.2.0
 
-  '@sourcegraph/amp@0.0.1757596358-g533dbf':
+  '@sourcegraph/amp-sdk@0.1.0-20251029183144-g02378e6':
+    dependencies:
+      '@sourcegraph/amp': 0.0.1761923019-g9e7b76
+      zod: 3.25.76
+
+  '@sourcegraph/amp@0.0.1761923019-g9e7b76':
     dependencies:
       '@napi-rs/keyring': 1.1.9
-
-  '@sourcegraph/the-orb-is-awake@0.1.0':
-    dependencies:
-      '@sourcegraph/amp': 0.0.1757596358-g533dbf
 
   '@tsconfig/node10@1.0.11': {}
 
@@ -590,5 +594,7 @@ snapshots:
       yargs-parser: 22.0.0
 
   yn@3.1.1: {}
+
+  zod@3.25.76: {}
 
   zod@4.1.8: {}

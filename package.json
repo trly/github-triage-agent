@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@octokit/rest": "^20.1.2",
-    "@sourcegraph/the-orb-is-awake": "^0.1.0",
+    "@sourcegraph/amp-sdk": "0.1.0-20251029183144-g02378e6",
     "@types/yargs": "^17.0.33",
     "dotenv": "^16.6.1",
     "yargs": "^18.0.0",

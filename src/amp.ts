@@ -1,8 +1,14 @@
-import { execute } from '@sourcegraph/the-orb-is-awake';
-import type { AmpOptions } from '@sourcegraph/the-orb-is-awake';
-import { Octokit } from '@octokit/rest';
-import type { BranchFailure, AmpAnalysis } from './types.js';
-import { GitHubClient } from './github.js';
+import { execute } from "@sourcegraph/amp-sdk";
+import type { AmpOptions } from "@sourcegraph/amp-sdk";
+import { Octokit } from "@octokit/rest";
+import type { BranchFailure, AmpAnalysis } from "./types.js";
+import { GitHubClient } from "./github.js";
+import { readFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export class AmpClient {
   private octokit: Octokit;
@@ -15,9 +21,36 @@ export class AmpClient {
     this.github = new GitHubClient();
   }
 
-  async analyzeFailure(owner: string, repo: string, failure: BranchFailure, logs: string): Promise<AmpAnalysis> {
+  private loadTemplate(templateName: string): string {
+    const templatePath = join(
+      __dirname,
+      "..",
+      ".github",
+      "templates",
+      templateName,
+    );
+    return readFileSync(templatePath, "utf-8");
+  }
+
+  private renderTemplate(
+    template: string,
+    variables: Record<string, string>,
+  ): string {
+    return Object.entries(variables).reduce(
+      (result, [key, value]) =>
+        result.replace(new RegExp(`{{${key}}}`, "g"), value),
+      template,
+    );
+  }
+
+  async analyzeFailure(
+    owner: string,
+    repo: string,
+    failure: BranchFailure,
+    logs: string,
+  ): Promise<AmpAnalysis> {
     const repoUrl = `https://github.com/${owner}/${repo}`;
-    
+
     const prompt = `You are an expert at analyzing GitHub Actions failures. Please analyze the following failed workflow and provide insights.
 
 Repository: ${repoUrl}
@@ -39,9 +72,16 @@ Be concise but thorough in your analysis.`;
     return this.runAmpAnalysis(prompt, failure);
   }
 
-  async triageOnBranch(owner: string, repo: string, failure: BranchFailure, logs: string): Promise<AmpAnalysis> {
+  async triageOnBranch(
+    owner: string,
+    repo: string,
+    failure: BranchFailure,
+    logs: string,
+  ): Promise<AmpAnalysis> {
     const repoUrl = `https://github.com/${owner}/${repo}`;
-    
+    const prCommentTemplate = this.loadTemplate("pr-comment-automated-fix.md");
+    const prBranchFixTemplate = this.loadTemplate("pr-branch-fix.md");
+
     const prompt = `You are an expert at fixing GitHub Actions failures. Please triage the following failed workflow.
 
 Repository: ${repoUrl}
@@ -71,17 +111,35 @@ IMPORTANT REQUIREMENTS:
 - After committing your changes, you MUST push them to the remote with: git push origin ${failure.branch}
 - Clean up the temporary working directory after pushing changes: rm -rf $TEMP_WORK_DIR
 
-Please be thorough in testing your fixes before committing and pushing.`;
+Please be thorough in testing your fixes before committing and pushing.
+
+---
+
+PR/COMMENT TEMPLATES:
+
+If an existing PR is found for this branch, use this template for the comment:
+${prCommentTemplate}
+
+If creating a new PR, use this template:
+${prBranchFixTemplate}
+
+Template variables available: {{ampThreadUrl}}, {{summary}}, {{branch}}`;
 
     const analysis = await this.runAmpRemediation(prompt, failure, owner, repo);
     await this.handlePRForBranch(owner, repo, failure, analysis);
     return analysis;
   }
 
-  async triageOnMain(owner: string, repo: string, failure: BranchFailure, logs: string): Promise<AmpAnalysis> {
+  async triageOnMain(
+    owner: string,
+    repo: string,
+    failure: BranchFailure,
+    logs: string,
+  ): Promise<AmpAnalysis> {
     const repoUrl = `https://github.com/${owner}/${repo}`;
     const fixBranchName = `fix/triage-${failure.branch}-${Date.now()}`;
-    
+    const prMainBranchFixTemplate = this.loadTemplate("pr-main-branch-fix.md");
+
     const prompt = `You are an expert at fixing GitHub Actions failures. Please triage the following failed workflow by creating a feature branch and PR.
 
 Repository: ${repoUrl}
@@ -114,36 +172,61 @@ IMPORTANT REQUIREMENTS:
 - After committing your changes, you MUST push them to the remote with: git push origin ${fixBranchName}
 - Clean up the temporary working directory after pushing changes: rm -rf $TEMP_WORK_DIR
 
-Please be thorough in testing your fixes before committing and pushing.`;
+Please be thorough in testing your fixes before committing and pushing.
 
-    const analysis = await this.runAmpRemediation(prompt, failure, owner, repo, fixBranchName);
-    await this.createFixPR(owner, repo, fixBranchName, failure.branch, analysis, failure.workflowName);
+---
+
+PR TEMPLATE:
+
+When creating the PR, use this template:
+${prMainBranchFixTemplate}
+
+Template variables available: {{workflowName}}, {{targetBranch}}, {{ampThreadUrl}}, {{summary}}`;
+
+    const analysis = await this.runAmpRemediation(
+      prompt,
+      failure,
+      owner,
+      repo,
+      fixBranchName,
+    );
+    await this.createFixPR(
+      owner,
+      repo,
+      fixBranchName,
+      failure.branch,
+      analysis,
+      failure.workflowName,
+    );
     return analysis;
   }
 
-  private async runAmpAnalysis(prompt: string, failure: BranchFailure): Promise<AmpAnalysis> {
+  private async runAmpAnalysis(
+    prompt: string,
+    failure: BranchFailure,
+  ): Promise<AmpAnalysis> {
     try {
       const ampOptions: AmpOptions = {
         dangerouslyAllowAll: true,
-        visibility: 'private',
-        logLevel: 'info',
+        visibility: "private",
+        logLevel: "info",
       };
 
-      let rootCause = '';
-      let sessionId = '';
+      let rootCause = "";
+      let sessionId = "";
 
       for await (const message of execute({ prompt, options: ampOptions })) {
-        if (message.type === 'system' && message.subtype === 'init') {
+        if (message.type === "system" && message.subtype === "init") {
           sessionId = message.session_id;
-        } else if (message.type === 'assistant') {
+        } else if (message.type === "assistant") {
           if (message.message.content) {
             const textContent = message.message.content
-              .filter((c: any) => c.type === 'text')
+              .filter((c: any) => c.type === "text")
               .map((c: any) => c.text)
-              .join('');
+              .join("");
             rootCause += textContent;
           }
-        } else if (message.type === 'result') {
+        } else if (message.type === "result") {
           if (message.is_error) {
             throw new Error(`Amp analysis failed: ${message.error}`);
           }
@@ -153,57 +236,65 @@ Please be thorough in testing your fixes before committing and pushing.`;
 
       return {
         branch: failure.branch,
-        rootCause: rootCause || 'Analysis completed',
-        suggestedFix: 'See analysis above',
-        ampThreadUrl: sessionId ? `https://ampcode.com/threads/${sessionId}` : '',
+        rootCause: rootCause || "Analysis completed",
+        suggestedFix: "See analysis above",
+        ampThreadUrl: sessionId
+          ? `https://ampcode.com/threads/${sessionId}`
+          : "",
       };
     } catch (error) {
-      console.error('Error in Amp analysis:', error);
+      console.error("Error in Amp analysis:", error);
       return {
         branch: failure.branch,
         rootCause: `Error during analysis: ${error}`,
-        suggestedFix: 'Unable to analyze - manual investigation required',
-        ampThreadUrl: '',
+        suggestedFix: "Unable to analyze - manual investigation required",
+        ampThreadUrl: "",
       };
     }
   }
 
-  private async runAmpRemediation(prompt: string, failure: BranchFailure, owner: string, repo: string, fixBranch?: string): Promise<AmpAnalysis> {
+  private async runAmpRemediation(
+    prompt: string,
+    failure: BranchFailure,
+    owner: string,
+    repo: string,
+    fixBranch?: string,
+  ): Promise<AmpAnalysis> {
     try {
       const tempDir = `/tmp/triage-work-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const ampOptions: AmpOptions = {
         dangerouslyAllowAll: true,
-        visibility: 'private',
-        logLevel: 'info',
+        visibility: "private",
+        logLevel: "info",
         env: {
-          GITHUB_TOKEN: process.env.GITHUB_TOKEN || '',
+          GITHUB_TOKEN: process.env.GITHUB_TOKEN || "",
           REPO_OWNER: owner,
           REPO_NAME: repo,
           BRANCH_NAME: failure.branch,
           FIX_BRANCH: fixBranch || failure.branch,
           WORKFLOW_RUN_ID: failure.workflowRunId.toString(),
           TEMP_WORK_DIR: tempDir,
-        }
+        },
       };
 
-      let remediationResult = '';
-      let sessionId = '';
+      let remediationResult = "";
+      let sessionId = "";
 
       for await (const message of execute({ prompt, options: ampOptions })) {
-        if (message.type === 'system' && message.subtype === 'init') {
+        if (message.type === "system" && message.subtype === "init") {
           sessionId = message.session_id;
-        } else if (message.type === 'assistant') {
+        } else if (message.type === "assistant") {
           if (message.message.content) {
             const textContent = message.message.content
-              .filter((c: any) => c.type === 'text')
+              .filter((c: any) => c.type === "text")
               .map((c: any) => c.text)
-              .join('');
+              .join("");
             if (textContent.trim()) {
-              console.log('Amp:', textContent);
+              console.log("Amp:", textContent);
             }
           }
-        } else if (message.type === 'result') {
+        } else if (message.type === "result") {
           if (message.is_error) {
             throw new Error(`Amp remediation failed: ${message.error}`);
           } else {
@@ -215,111 +306,96 @@ Please be thorough in testing your fixes before committing and pushing.`;
 
       return {
         branch: failure.branch,
-        rootCause: 'Remediation completed',
-        suggestedFix: remediationResult || 'Fixes applied successfully',
-        ampThreadUrl: sessionId ? `https://ampcode.com/threads/${sessionId}` : '',
+        rootCause: "Remediation completed",
+        suggestedFix: remediationResult || "Fixes applied successfully",
+        ampThreadUrl: sessionId
+          ? `https://ampcode.com/threads/${sessionId}`
+          : "",
       };
     } catch (error) {
-      console.error('Error in Amp remediation:', error);
+      console.error("Error in Amp remediation:", error);
       return {
         branch: failure.branch,
         rootCause: `Remediation failed: ${error}`,
-        suggestedFix: 'Manual intervention required',
-        ampThreadUrl: '',
+        suggestedFix: "Manual intervention required",
+        ampThreadUrl: "",
       };
     }
   }
 
-  private async handlePRForBranch(owner: string, repo: string, failure: BranchFailure, analysis: AmpAnalysis): Promise<void> {
+  private async handlePRForBranch(
+    owner: string,
+    repo: string,
+    failure: BranchFailure,
+    analysis: AmpAnalysis,
+  ): Promise<void> {
     try {
-      const existingPR = await this.github.hasOpenPR(owner, repo, failure.branch);
-      
+      const existingPR = await this.github.hasOpenPR(
+        owner,
+        repo,
+        failure.branch,
+      );
+
       if (existingPR) {
         // Comment on existing PR
+        const commentTemplate = this.loadTemplate(
+          "pr-comment-automated-fix.md",
+        );
+        const commentBody = this.renderTemplate(commentTemplate, {
+          ampThreadUrl: analysis.ampThreadUrl,
+          summary: analysis.suggestedFix,
+        });
+
         await this.octokit.issues.createComment({
           owner,
           repo,
           issue_number: existingPR,
-          body: `**Action Triage Agent - Automated Fix Applied**
-
-This PR has been updated with automated fixes by the Action Triage Agent.
-
-**Amp Analysis Thread:** ${analysis.ampThreadUrl}
-
-**Summary:** ${analysis.suggestedFix}
-
-Please review the changes and verify they resolve the CI/CD failures.`
+          body: commentBody,
         });
         console.log(`Added comment to existing PR #${existingPR}`);
       } else {
-        // Create new PR to main
-        const prResponse = await this.octokit.pulls.create({
-          owner,
-          repo,
-          title: `Fix CI/CD failures on ${failure.branch}`,
-          head: failure.branch,
-          base: 'main',
-          body: `**Automated CI/CD Fix**
-
-This PR contains automated fixes for GitHub Actions failures detected on the \`${failure.branch}\` branch.
-
-## Changes Made
-- Automated remediation applied by Action Triage Agent
-- Fixes were analyzed and applied using AI-powered analysis
-
-**Amp Analysis Thread:** ${analysis.ampThreadUrl}
-
-## Next Steps
-1. Review the changes in this PR
-2. Verify that CI/CD tests pass
-3. Merge if fixes are appropriate
-
----
-*This PR was created automatically by the Action Triage Agent*`
-        });
-        
-        console.log(`Created new PR #${prResponse.data.number}: ${prResponse.data.html_url}`);
+        // No existing PR - fixes were pushed but no PR created
+        console.log(
+          `Fixes pushed to ${failure.branch}, but no PR created (no existing PR found)`,
+        );
       }
     } catch (error) {
-      console.error('Error handling PR for branch:', error);
+      console.error("Error handling PR for branch:", error);
     }
   }
 
-  private async createFixPR(owner: string, repo: string, fixBranch: string, targetBranch: string, analysis: AmpAnalysis, workflowName: string): Promise<void> {
+  private async createFixPR(
+    owner: string,
+    repo: string,
+    fixBranch: string,
+    targetBranch: string,
+    analysis: AmpAnalysis,
+    workflowName: string,
+  ): Promise<void> {
     try {
+      const prTemplate = this.loadTemplate("pr-main-branch-fix.md");
+      const prBody = this.renderTemplate(prTemplate, {
+        workflowName,
+        targetBranch,
+        ampThreadUrl: analysis.ampThreadUrl,
+        summary: analysis.suggestedFix,
+      });
+
       const prResponse = await this.octokit.pulls.create({
         owner,
         repo,
         title: `Fix CI/CD failures in ${workflowName} (${targetBranch})`,
         head: fixBranch,
         base: targetBranch,
-        body: `**Automated CI/CD Fix for Main Branch**
-
-This PR contains automated fixes for GitHub Actions failures detected in the \`${workflowName}\` workflow on the \`${targetBranch}\` branch.
-
-## Changes Made
-- Automated remediation applied by Action Triage Agent
-- Fixes were analyzed and applied using AI-powered analysis
-- Created as PR to protect main branch from direct commits
-
-**Amp Analysis Thread:** ${analysis.ampThreadUrl}
-
-**Summary:** ${analysis.suggestedFix}
-
-## Next Steps
-1. Review the changes in this PR
-2. Verify that CI/CD tests pass
-3. Merge if fixes are appropriate
-
-**Note:** This fix targets the main branch (${targetBranch}) and was automatically created as a PR to follow branch protection rules.
-
----
-*This PR was created automatically by the Action Triage Agent*`
+        body: prBody,
       });
-      
-      console.log(`Created fix PR #${prResponse.data.number}: ${prResponse.data.html_url}`);
+
+      console.log(
+        `Created fix PR #${prResponse.data.number}: ${prResponse.data.html_url}`,
+      );
     } catch (error) {
-      console.error('Error creating fix PR:', error);
+      console.error("Error creating fix PR:", error);
     }
   }
 }
+
