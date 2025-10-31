@@ -114,7 +114,7 @@ async function main() {
       console.log(`\nRoot Cause: ${analysis.rootCause}`);
       console.log(`Suggested Fix: ${analysis.suggestedFix}`);
       if (analysis.ampThreadUrl) {
-        console.log(`AMP Thread: ${analysis.ampThreadUrl}`);
+        console.log(`Amp Thread: ${analysis.ampThreadUrl}`);
       }
       
     } else if (options.mode === 'triage') {
@@ -133,7 +133,7 @@ async function main() {
       
       console.log(`Remediation completed for ${failure.branch}`);
       if (analysis.ampThreadUrl) {
-        console.log(`AMP Thread: ${analysis.ampThreadUrl}`);
+        console.log(`Amp Thread: ${analysis.ampThreadUrl}`);
       }
     }
     

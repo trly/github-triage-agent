@@ -145,7 +145,7 @@ Please be thorough in testing your fixes before committing and pushing.`;
           }
         } else if (message.type === 'result') {
           if (message.is_error) {
-            throw new Error(`AMP analysis failed: ${message.error}`);
+            throw new Error(`Amp analysis failed: ${message.error}`);
           }
           break;
         }
@@ -158,7 +158,7 @@ Please be thorough in testing your fixes before committing and pushing.`;
         ampThreadUrl: sessionId ? `https://ampcode.com/threads/${sessionId}` : '',
       };
     } catch (error) {
-      console.error('Error in AMP analysis:', error);
+      console.error('Error in Amp analysis:', error);
       return {
         branch: failure.branch,
         rootCause: `Error during analysis: ${error}`,
@@ -200,12 +200,12 @@ Please be thorough in testing your fixes before committing and pushing.`;
               .map((c: any) => c.text)
               .join('');
             if (textContent.trim()) {
-              console.log('AMP:', textContent);
+              console.log('Amp:', textContent);
             }
           }
         } else if (message.type === 'result') {
           if (message.is_error) {
-            throw new Error(`AMP remediation failed: ${message.error}`);
+            throw new Error(`Amp remediation failed: ${message.error}`);
           } else {
             remediationResult = message.result;
             break;
@@ -220,7 +220,7 @@ Please be thorough in testing your fixes before committing and pushing.`;
         ampThreadUrl: sessionId ? `https://ampcode.com/threads/${sessionId}` : '',
       };
     } catch (error) {
-      console.error('Error in AMP remediation:', error);
+      console.error('Error in Amp remediation:', error);
       return {
         branch: failure.branch,
         rootCause: `Remediation failed: ${error}`,
@@ -244,7 +244,7 @@ Please be thorough in testing your fixes before committing and pushing.`;
 
 This PR has been updated with automated fixes by the Action Triage Agent.
 
-**AMP Analysis Thread:** ${analysis.ampThreadUrl}
+**Amp Analysis Thread:** ${analysis.ampThreadUrl}
 
 **Summary:** ${analysis.suggestedFix}
 
@@ -267,7 +267,7 @@ This PR contains automated fixes for GitHub Actions failures detected on the \`$
 - Automated remediation applied by Action Triage Agent
 - Fixes were analyzed and applied using AI-powered analysis
 
-**AMP Analysis Thread:** ${analysis.ampThreadUrl}
+**Amp Analysis Thread:** ${analysis.ampThreadUrl}
 
 ## Next Steps
 1. Review the changes in this PR
@@ -302,10 +302,9 @@ This PR contains automated fixes for GitHub Actions failures detected in the \`$
 - Fixes were analyzed and applied using AI-powered analysis
 - Created as PR to protect main branch from direct commits
 
-**AMP Analysis Thread:** ${analysis.ampThreadUrl}
+**Amp Analysis Thread:** ${analysis.ampThreadUrl}
 
-## Summary
-${analysis.suggestedFix}
+**Summary:** ${analysis.suggestedFix}
 
 ## Next Steps
 1. Review the changes in this PR

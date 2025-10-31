@@ -1,11 +1,11 @@
 # Action Triage Agent (Simplified)
 
-A streamlined GitHub Actions failure triage tool powered by the-orb-is-awake (AMP). This tool analyzes failed CI/CD workflows and can automatically triage common issues.
+A streamlined GitHub Actions failure triage tool powered by the-orb-is-awake (Amp). This tool analyzes failed CI/CD workflows and can automatically triage common issues.
 
 ## Features
 
 - **Simple Branch Analysis**: Finds the latest failed workflow per branch
-- **AMP Integration**: Uses the-orb-is-awake for AI-powered failure analysis and remediation  
+- **Amp Integration**: Uses the-orb-is-awake for AI-powered failure analysis and remediation  
 - **Smart PR Management**: Creates PRs for main branch fixes, comments on existing PRs
 - **Clean Output**: Clear, concise reporting without complexity
 
@@ -107,7 +107,7 @@ pnpm run dev owner/repo triage feature/auth
 - Downloads logs only when needed for analysis/remediation
 
 ### 3. AI Analysis & Remediation
-- Sends failure context to the-orb-is-awake (AMP)
+- Sends failure context to the-orb-is-awake (Amp)
 - Gets root cause analysis and suggested fixes
 - For remediation: clones repo, applies fixes, commits and pushes changes
 
@@ -161,9 +161,9 @@ The simplified tool has clean, focused components:
 
 **Total: ~520 LOC** (down from ~1400 LOC in the original)
 
-## Environment Variables in AMP Execution
+## Environment Variables in Amp Execution
 
-The tool passes relevant environment variables to AMP:
+The tool passes relevant environment variables to Amp:
 
 - `GITHUB_TOKEN`: For repository access
 - `REPO_OWNER`: Repository owner
@@ -212,15 +212,15 @@ Processing 1 failures...
 Processing main/CI...
 Main branch detected - creating PR for safety
 
-AMP: Cloning repository...
-AMP: Checking out branch main...
-AMP: Fixed missing import in src/auth/service.ts
-AMP: Tests passing, committing changes...
+Amp: Cloning repository...
+Amp: Checking out branch main...
+Amp: Fixed missing import in src/auth/service.ts
+Amp: Tests passing, committing changes...
 
 Created fix PR #42: https://github.com/myorg/myapp/pull/42
 
 Remediation completed for main
-AMP Thread: https://ampcode.com/threads/T-abc123
+Amp Thread: https://ampcode.com/threads/T-abc123
 
 Summary:
    Processed: 1 failures
